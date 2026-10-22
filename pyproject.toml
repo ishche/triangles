@@ -1,0 +1,24 @@
+[project]
+name = "domeprint"
+version = "0.1.0"
+description = "Print-ready paper templates (cut + fold lines, glue tabs) for geodesic dome triangles."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+domeprint = "domeprint.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+    "pypdf>=6.21.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
