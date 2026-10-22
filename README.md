@@ -93,3 +93,7 @@ Layout can only move and rotate pieces.
 `layout/` that returns a list of `Sheet`s. `render_pdf` already writes a list of
 sheets as a multi-page PDF, and the rigidity and inside-page checks in
 `tests/test_layout.py` apply to any placement.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
