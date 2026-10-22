@@ -8,7 +8,17 @@ src/domeprint/
               layouts, multi-piece packing (no-fit polygons), layout validation
   render/     display.py turns a Sheet into renderer-neutral paths and text;
               svg.py and pdf.py write that list as-is (pdf.py is standard library only)
+  dome.py     geodesic dome (class I icosahedron subdivision): mesh, strut and
+              triangle types with counts; triangle sides feed Triangle(ab, bc, ca)
+  frame/      full-size frame loads: truss.py (space truss, direct stiffness), wind.py
+              (EN 1991-1-4), snow.py (EN 1991-1-3), members.py (buckling), analysis.py
+              (load cases, EN 1990 combinations, envelope); see docs/loads.md
+  job.py      options → sheets; shared by the command line and the server
   cli.py      command line
+  server.py   JSON API for the web viewer (standard library only)
+
+web/          React + Vite viewer: template preview (SVG from the API) and a
+              three.js dome view; `./dev.sh` runs it with the API
 ```
 
 ## Data flow
@@ -57,4 +67,6 @@ Triangle(ab, bc, ca) + TabSpec(width)
 | `test_layout.py`, `test_packing.py` | single-piece layouts, packing capacity and validity |
 | `test_labels.py` | labels stay on glue tabs |
 | `test_svg.py`, `test_pdf.py` | output formats, exact physical size (poppler tests skip if not installed) |
-| `test_cli.py` | command line |
+| `test_dome.py` | dome mesh, published chord factors and strut counts, mirror types |
+| `test_truss.py`, `test_loads.py`, `test_frame.py` | truss solver, wind / snow / buckling formulas, dome load analysis |
+| `test_cli.py`, `test_server.py` | command line, JSON API |

@@ -18,3 +18,7 @@ out/
 .DS_Store
 .idea/
 .vscode/
+
+# Web
+node_modules/
+web/dist/

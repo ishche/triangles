@@ -38,6 +38,30 @@ measures exactly 100 mm. See [docs/printing.md](docs/printing.md).
 
 Packing more than one sheet into SVG writes one file per sheet (`name-1.svg`, …).
 
+## Web viewer
+
+A live preview in the browser: change the triangle, tabs or sheet and see the
+packed sheets immediately, then download the PDF or per-sheet SVG.
+
+The **Dome 3D** tab shows a geodesic dome (1V–12V, any radius, 3/8 to full
+sphere) coloured by triangle or strut type, with the exact lengths and how many
+of each you need. "Template →" loads a triangle type into the template view.
+
+**Loads** checks the full-size frame: pick a radius in metres, strut material and
+section, snow and wind. It shows strut forces per load case, a utilisation check
+over all Eurocode combinations and wind directions, and foundation reactions.
+The math, sources and limits are in [docs/loads.md](docs/loads.md).
+
+```sh
+./dev.sh          # API on :8000 (restarts on Python changes) + Vite on :5173 (hot reload)
+```
+
+Open http://localhost:5173. Needs [uv](https://docs.astral.sh/uv/) and Node.js 20+.
+Set `API_PORT` / `WEB_PORT` to change ports.
+
+Without the dev server: `npm --prefix web install && npm --prefix web run build`,
+then `uv run domeprint-server` serves the built UI and the API on http://127.0.0.1:8000.
+
 ## Development
 
 ```sh

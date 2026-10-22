@@ -7,17 +7,9 @@ import math
 import sys
 from pathlib import Path
 
-from .geometry import InvalidTriangleError, TabSpec, Triangle, build_piece
-from .layout import (
-    PAPER_SIZES_MM,
-    Demand,
-    DoesNotFitError,
-    PackOptions,
-    fill_sheet,
-    pack,
-    single_on_paper,
-    tight_sheet,
-)
+from .geometry import InvalidTriangleError
+from .job import JobOptions, run_job
+from .layout import PAPER_SIZES_MM, DoesNotFitError
 from .render import RenderStyle, render_pdf, render_svg
 
 
@@ -61,26 +53,22 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        triangle = Triangle(args.ab, args.bc, args.ca)
-        spec = TabSpec(args.tab, args.max_tab_angle, clamp_to_bisector=not args.no_bisector)
-        piece = build_piece(triangle, spec)
-        calibration = not args.no_calibration
-        if args.count is not None and args.count < 1:
-            raise ValueError("--count must be at least 1")
-        tight = args.paper.lower() == "tight"
-        if tight and args.count not in (None, 1):
-            raise ValueError("--paper tight holds a single piece; choose a paper size to print several")
-        opts = None if tight else PackOptions(args.paper, args.margin, args.spacing, calibration)
-        fill = None
-        if tight:
-            sheets = [tight_sheet(piece, args.margin, calibration=calibration)]
-        elif args.count is None:
-            sheets = [fill_sheet(piece, opts)]
-        elif args.count == 1:
-            sheets = [single_on_paper(piece, args.paper, args.margin, calibration=calibration)]
-        else:
-            result = pack([Demand(piece, args.count)], opts)
-            sheets, fill = list(result.sheets), result.fill_ratio
+        job = JobOptions(
+            args.ab,
+            args.bc,
+            args.ca,
+            tab=args.tab,
+            max_tab_angle=args.max_tab_angle,
+            bisector=not args.no_bisector,
+            paper=args.paper,
+            margin=args.margin,
+            count=args.count,
+            spacing=args.spacing,
+            calibration=not args.no_calibration,
+        )
+        result = run_job(job)
+        triangle, piece, sheets, fill = result.triangle, result.piece, result.sheets, result.fill
+        tight = job.tight
     except (InvalidTriangleError, DoesNotFitError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
