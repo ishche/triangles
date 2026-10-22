@@ -5,8 +5,7 @@ Print-ready paper templates for geodesic dome triangles.
 Give it the three side lengths of a triangle and a glue tab width. It produces
 an SVG or PDF at exact physical size, where:
 - solid lines are cuts;
-- dashed lines are folds;
-- edge labels are printed on the glue tabs.
+- dashed lines are folds.
 
 Many copies are packed onto as few sheets as possible.
 
@@ -37,30 +36,6 @@ measures exactly 100 mm. See [docs/printing.md](docs/printing.md).
 | `-o`, `--format` | SVG to stdout | output file; the format follows the extension (`.pdf` / `.svg`) |
 
 Packing more than one sheet into SVG writes one file per sheet (`name-1.svg`, …).
-
-## Python API
-
-```python
-from domeprint.geometry import Triangle, TabSpec, build_piece
-from domeprint.layout import Demand, PackOptions, pack
-from domeprint.render import render_pdf
-
-a = build_piece(Triangle.isosceles(61.8, 54.7), TabSpec(5))
-b = build_piece(Triangle.equilateral(61.8), TabSpec(5))
-result = pack([Demand(a, 30, "A"), Demand(b, 10, "B")], PackOptions(paper="A4", spacing=2))
-open("dome.pdf", "wb").write(render_pdf(result.sheets))
-```
-
-## How it works
-
-- [docs/geometry.md](docs/geometry.md): triangle construction, glue tabs and
-  corner bevels, validation, labels.
-- [docs/layout.md](docs/layout.md): packing algorithm (180° pairing, no-fit
-  polygons, per-sheet row planning) and measured efficiency.
-- [docs/printing.md](docs/printing.md): printing instructions and how exact
-  size is guaranteed and tested.
-- [docs/architecture.md](docs/architecture.md): modules, data flow, extension
-  points, test map.
 
 ## Development
 
