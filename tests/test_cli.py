@@ -40,3 +40,35 @@ def test_truncation_warning(capsys):
 def test_does_not_fit(capsys):
     assert main(["500", "500", "500", "--paper", "A4"]) == 2
     assert "does not fit" in capsys.readouterr().err
+
+
+def test_count_packs_multiple_pieces_into_pdf(tmp_path, capsys):
+    from pypdf import PdfReader
+
+    out = tmp_path / "many.pdf"
+    assert main(["61.8", "54.7", "54.7", "--tab", "5", "--count", "30", "-o", str(out)]) == 0
+    reader = PdfReader(str(out))
+    assert len(reader.pages) == 2  # 18 per landscape A4 sheet
+    err = capsys.readouterr().err
+    assert "30 pieces on 2 sheets" in err
+
+
+def test_count_with_svg_writes_one_file_per_sheet(tmp_path):
+    out = tmp_path / "many.svg"
+    assert main(["61.8", "54.7", "54.7", "--count", "30", "-o", str(out)]) == 0
+    assert (tmp_path / "many-1.svg").exists() and (tmp_path / "many-2.svg").exists()
+    assert not out.exists()
+
+
+def test_count_svg_to_stdout_needs_single_sheet(capsys):
+    assert main(["61.8", "54.7", "54.7", "--count", "30"]) == 2
+    assert "one sheet" in capsys.readouterr().err
+
+
+def test_spacing_option(tmp_path):
+    out = tmp_path / "s.pdf"
+    assert main(["50", "50", "50", "--count", "10", "--spacing", "0", "-o", str(out)]) == 0
+
+
+def test_bad_count(capsys):
+    assert main(["50", "50", "50", "--count", "0"]) == 2

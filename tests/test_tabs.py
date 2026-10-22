@@ -28,6 +28,21 @@ def test_tabspec_rejects_bad_angle(angle):
         TabSpec(5, max_end_angle_deg=angle)
 
 
+@pytest.mark.parametrize("width", [2.2e-311, 1e-9, 0.0009])
+def test_tabspec_rejects_microscopic_width(width):
+    """Found by the packing property test: a denormal width built tab points on
+    top of the fold line, which the validator rightly rejected deep inside."""
+    with pytest.raises(ValueError, match="at least"):
+        TabSpec(width)
+
+
+def test_smallest_allowed_tab_builds_valid_pieces():
+    from domeprint.geometry import Triangle, build_piece
+
+    for sides in [(0.5, 0.5, 0.5), (50, 40, 30), (2000, 1500, 1200)]:
+        build_piece(Triangle(*sides), TabSpec(0.001))  # validates internally
+
+
 def test_tabspec_zero_width_disables():
     assert not TabSpec(0).enabled
     assert TabSpec(0.1).enabled

@@ -24,7 +24,7 @@ def _candidate_rotations(piece: Piece) -> list[float]:
     return base + [a + math.pi / 2 for a in base]
 
 
-def _calibration_length(available: float) -> float | None:
+def calibration_length(available: float) -> float | None:
     for length in _CALIBRATION_LENGTHS_MM:
         if length <= available + _FIT_EPS:
             return length
@@ -52,13 +52,11 @@ def tight_sheet(piece: Piece, margin: float = 10.0, calibration: bool = True) ->
     return Sheet(width, height, (placement,), cal)
 
 
-def single_on_paper(
-    piece: Piece, paper: str = "A4", margin: float = 10.0, calibration: bool = True
-) -> Sheet:
+def single_on_paper(piece: Piece, paper: str = "A4", margin: float = 10.0, calibration: bool = True) -> Sheet:
     """Center one piece on a standard paper size, rotating it if needed to fit."""
     width, height = paper_size(paper)
     usable_w = width - 2 * margin
-    cal_len = _calibration_length(usable_w) if calibration else None
+    cal_len = calibration_length(usable_w) if calibration else None
     band = CALIBRATION_BAND_MM if cal_len else 0.0
     usable_h = height - 2 * margin - band
     if usable_w <= 0 or usable_h <= 0:

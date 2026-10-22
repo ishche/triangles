@@ -39,6 +39,10 @@ from dataclasses import dataclass
 
 from .vec import Vec2
 
+#: Smallest non-zero tab width (1 micrometre). Anything narrower is physically
+#: meaningless and numerically indistinguishable from the fold line.
+MIN_TAB_WIDTH_MM = 1e-3
+
 #: Top lengths below this fraction of the edge length are treated as zero (apex).
 _APEX_REL_TOL = 1e-9
 
@@ -61,6 +65,8 @@ class TabSpec:
         w = float(self.width)
         if not math.isfinite(w) or w < 0.0:
             raise ValueError(f"tab width must be a finite number >= 0, got {self.width!r}")
+        if 0.0 < w < MIN_TAB_WIDTH_MM:
+            raise ValueError(f"tab width must be 0 (no tabs) or at least {MIN_TAB_WIDTH_MM} mm, got {w!r}")
         ang = float(self.max_end_angle_deg)
         if not math.isfinite(ang) or not (0.0 < ang <= 90.0):
             raise ValueError(f"max_end_angle_deg must be in (0, 90], got {self.max_end_angle_deg!r}")

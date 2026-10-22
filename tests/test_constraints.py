@@ -5,7 +5,7 @@ import dataclasses
 import math
 
 import pytest
-from hypothesis import given
+from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from domeprint.geometry import (
@@ -21,6 +21,7 @@ from domeprint.geometry import (
     piece_problems,
     validate_piece,
 )
+from domeprint.geometry.tabs import MIN_TAB_WIDTH_MM
 
 from .conftest import line_distance
 
@@ -60,6 +61,7 @@ width_fracs = st.floats(0.01, 0.99)  # tab width as a fraction of the inradius
 def isosceles_pieces(draw, max_angle=None, clamp=True):
     t = isosceles_from_apex(draw(apex_angles), draw(legs))
     w = t.inradius * draw(width_fracs)
+    assume(w >= MIN_TAB_WIDTH_MM)  # narrower tabs are rejected by TabSpec
     angle = draw(st.floats(1, 90)) if max_angle is None else max_angle
     return build_piece(t, TabSpec(w, max_end_angle_deg=angle, clamp_to_bisector=clamp))
 
@@ -75,7 +77,7 @@ class TestReferenceIsosceles:
     piece = build_piece(t, TabSpec(5))
 
     def test_triangle(self):
-        a, b, c = self.t.vertices
+        _a, _b, c = self.t.vertices
         assert close(c, 30, 40)
         assert math.isclose(self.t.inradius, 15, rel_tol=1e-15)
         assert math.isclose(math.tan(self.t.angles[0] / 2), 0.5, rel_tol=1e-14)
@@ -297,6 +299,7 @@ def test_no_overlap_even_without_bisector_clamp(piece):
 
 @given(st.builds(isosceles_from_apex, apex_angles, legs), st.floats(0.01, 10))
 def test_any_width_gives_valid_piece(t, factor):
+    assume(t.inradius * factor >= MIN_TAB_WIDTH_MM)
     piece = build_piece(t, TabSpec(t.inradius * factor))
     assert piece_problems(piece) == []
 
@@ -307,9 +310,7 @@ def test_untrimmed_tabs_would_overlap():
     t = Triangle.isosceles(60, 50)
     edges = t.edges
     w = 5
-    rect = [
-        (e.start, e.start + e.outward_normal * w, e.end + e.outward_normal * w, e.end) for e in edges
-    ]
+    rect = [(e.start, e.start + e.outward_normal * w, e.end + e.outward_normal * w, e.end) for e in edges]
     # Extend each strip past its vertices like an untrimmed offset band.
     ext = []
     for e in edges:
@@ -331,9 +332,7 @@ class TestValidatorDetectsViolations:
         import domeprint.geometry.piece as piece_mod
 
         good = piece_mod._construct
-        monkeypatch.setattr(
-            piece_mod, "_construct", lambda t, s: dataclasses.replace(good(t, s), fold_lines=())
-        )
+        monkeypatch.setattr(piece_mod, "_construct", lambda t, s: dataclasses.replace(good(t, s), fold_lines=()))
         with pytest.raises(GeometryError, match="fold lines"):
             build_piece(Triangle.isosceles(60, 50), TabSpec(5))
 
