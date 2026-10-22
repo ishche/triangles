@@ -12,11 +12,13 @@ from dataclasses import dataclass
 
 from .vec import Vec2
 
+_ORIGIN = Vec2(0.0, 0.0)  # immutable, so safe to share as a default
+
 
 @dataclass(frozen=True, slots=True)
 class Transform2D:
     angle: float = 0.0  # radians, counter-clockwise
-    offset: Vec2 = Vec2(0.0, 0.0)
+    offset: Vec2 = _ORIGIN
 
     @classmethod
     def identity(cls) -> Transform2D:

@@ -1,6 +1,20 @@
-.venv/
+# Python
 __pycache__/
+*.py[cod]
 *.egg-info/
+build/
+dist/
+
+# Tooling
+.venv/
 .pytest_cache/
 .hypothesis/
+.ruff_cache/
+
+# Generated templates
 out/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

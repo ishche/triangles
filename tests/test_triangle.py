@@ -31,7 +31,7 @@ def test_equilateral():
 
 def test_right_triangle_3_4_5():
     t = Triangle(ab=3, bc=4, ca=5)
-    ang_a, ang_b, ang_c = t.angles_deg
+    ang_a, ang_b, _ang_c = t.angles_deg
     assert ang_b == pytest.approx(90, abs=1e-12)  # between AB and BC
     assert ang_a == pytest.approx(math.degrees(math.atan2(4, 3)), abs=1e-12)
     assert t.area == pytest.approx(6, rel=1e-15)
@@ -43,7 +43,7 @@ def test_right_triangle_3_4_5():
 def test_isosceles_is_symmetric():
     t = Triangle.isosceles(base=80, leg=120)
     assert (t.ab, t.bc, t.ca) == (80, 120, 120)
-    a, b, c = t.vertices
+    _a, _b, c = t.vertices
     assert c.x == pytest.approx(40, abs=1e-12)
     assert c.y == pytest.approx(math.sqrt(120**2 - 40**2), rel=1e-14)
     ang_a, ang_b, _ = t.angles

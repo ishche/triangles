@@ -86,7 +86,7 @@ def mm_size(page) -> tuple[float, float]:
 # ======================================================== page size
 def test_mm_to_pt_constant():
     assert MM_TO_PT == 72 / 25.4
-    assert 210 * MM_TO_PT == pytest.approx(595.2755905511812, abs=1e-12)
+    assert pytest.approx(595.2755905511812, abs=1e-12) == 210 * MM_TO_PT
 
 
 @pytest.mark.parametrize("paper", PAPERS)
@@ -283,7 +283,7 @@ def test_raster_page_is_exact_pixel_size(tmp_path, paper):
 @pytest.mark.parametrize("paper", PAPERS)
 def test_raster_calibration_ruler_measures_100mm(tmp_path, paper):
     sheet = sample_sheet(paper)
-    w, h, px = rasterize(tmp_path, render_pdf(sheet))
+    w, _h, px = rasterize(tmp_path, render_pdf(sheet))
     cal = sheet.calibration
     # A row 2.5 mm above the bar crosses only the two 3 mm end ticks.
     y_mm = cal.origin.y + 2.5
@@ -298,15 +298,15 @@ def test_raster_calibration_ruler_measures_100mm(tmp_path, paper):
 def stroke_center(px, w, h, x: float, y: float, vertical_scan: bool, reach: int = 6) -> float | None:
     """Centre of the dark run crossing the scanline through (x, y) px, or None."""
     if vertical_scan:
-        c = int(math.floor(x))
+        c = math.floor(x)
         line = bytes(px[r * w + c] for r in range(h))
         pos = y
     else:
-        r = int(math.floor(y))
+        r = math.floor(y)
         line = px[r * w : (r + 1) * w]
         pos = x
     lo, hi = int(pos) - reach, int(pos) + reach
-    runs = [(a, b) for a, b in dark_runs(line[lo:hi]) ]
+    runs = [(a, b) for a, b in dark_runs(line[lo:hi])]
     if len(runs) != 1:
         return None
     a, b = runs[0]

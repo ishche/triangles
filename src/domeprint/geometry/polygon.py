@@ -57,10 +57,7 @@ def _orient(a: Vec2, b: Vec2, c: Vec2) -> float:
 
 
 def _on_segment(p: Vec2, a: Vec2, b: Vec2, eps: float) -> bool:
-    return (
-        min(a.x, b.x) - eps <= p.x <= max(a.x, b.x) + eps
-        and min(a.y, b.y) - eps <= p.y <= max(a.y, b.y) + eps
-    )
+    return min(a.x, b.x) - eps <= p.x <= max(a.x, b.x) + eps and min(a.y, b.y) - eps <= p.y <= max(a.y, b.y) + eps
 
 
 def segments_intersect(p1: Vec2, p2: Vec2, q1: Vec2, q2: Vec2, eps: float = 1e-9) -> bool:
@@ -79,9 +76,7 @@ def segments_intersect(p1: Vec2, p2: Vec2, q1: Vec2, q2: Vec2, eps: float = 1e-9
         return True
     if abs(d3) <= eps and _on_segment(q1, p1, p2, eps):
         return True
-    if abs(d4) <= eps and _on_segment(q2, p1, p2, eps):
-        return True
-    return False
+    return abs(d4) <= eps and _on_segment(q2, p1, p2, eps)
 
 
 def is_simple_polygon(polygon: Sequence[Vec2], eps: float = 1e-9, angle_eps: float = 1e-12) -> bool:
@@ -145,6 +140,4 @@ def convex_overlap_depth(p: Sequence[Vec2], q: Sequence[Vec2]) -> float:
 def is_convex_ccw(polygon: Sequence[Vec2], eps: float = 1e-9) -> bool:
     """True if every turn of the polygon is a left turn (collinear within eps allowed)."""
     n = len(polygon)
-    return n >= 3 and all(
-        _orient(polygon[i], polygon[(i + 1) % n], polygon[(i + 2) % n]) >= -eps for i in range(n)
-    )
+    return n >= 3 and all(_orient(polygon[i], polygon[(i + 1) % n], polygon[(i + 2) % n]) >= -eps for i in range(n))
