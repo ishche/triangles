@@ -330,3 +330,29 @@ def test_validator_detects_outside_margin():
     sheet = Sheet(210, 297, (Placement(piece, Transform2D(0, Vec2(1, 50))),))
     problems = layout_problems((sheet,), [Demand(piece, 1)], PackOptions())
     assert any("outside" in p for p in problems)
+
+
+# ======================================================== fill one sheet
+@pytest.mark.parametrize(
+    "piece, opts, expected",
+    [
+        (EQ, NO_GAP, 40),  # landscape A4, 4 rows of 10
+        (DOME_A, PackOptions(spacing=2), 18),
+        (RIGHT, SMALL, 16),  # needs the mixed row orientations
+    ],
+)
+def test_fill_sheet_holds_as_many_as_fit(piece, opts, expected):
+    from domeprint.layout import fill_sheet
+
+    sheet = fill_sheet(piece, opts)
+    assert len(sheet.placements) == expected
+    assert layout_problems((sheet,), [Demand(piece, expected)], opts) == []
+    # One more copy needs a second sheet.
+    assert len(pack([Demand(piece, expected + 1)], opts).sheets) == 2
+
+
+def test_fill_sheet_too_large_piece():
+    from domeprint.layout import fill_sheet
+
+    with pytest.raises(DoesNotFitError):
+        fill_sheet(build_piece(Triangle.equilateral(400), TabSpec(5)), PackOptions())

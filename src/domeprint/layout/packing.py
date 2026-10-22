@@ -399,3 +399,27 @@ def pack(demands: Sequence[Demand], options: PackOptions | None = None) -> PackR
         sheets.append(Sheet(pw, ph, placements, calibration))
     fill = used / (len(sheets) * area.width * area.height)
     return PackResult(tuple(sheets), fill)
+
+
+def fill_sheet(piece: Piece, options: PackOptions | None = None, label: str = "") -> Sheet:
+    """One sheet holding as many copies of `piece` as fit.
+
+    Each page orientation is packed with more copies than could possibly fit
+    (printable area / piece area, plus one); its first sheet is then full.
+    The orientation whose first sheet holds the most wins (ties: portrait).
+    """
+    options = options or PackOptions()
+    best: Sheet | None = None
+    for pw, ph in options.page_sizes():
+        area, _ = printable_area(pw, ph, options)
+        upper_bound = int(area.width * area.height / signed_area(piece.cut_outline)) + 1
+        single = PackOptions((pw, ph), options.margin, options.spacing, options.calibration, allow_landscape=False)
+        try:
+            sheet = pack([Demand(piece, upper_bound, label)], single).sheets[0]
+        except DoesNotFitError:
+            continue
+        if best is None or len(sheet.placements) > len(best.placements):
+            best = sheet
+    if best is None:
+        raise DoesNotFitError("the piece does not fit on the printable area in any orientation")
+    return best

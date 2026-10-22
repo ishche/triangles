@@ -7,13 +7,14 @@ an SVG or PDF at exact physical size, where:
 - solid lines are cuts;
 - dashed lines are folds.
 
-Many copies are packed onto as few sheets as possible.
+By default it fills one A4 sheet with as many copies as fit.
 
 ```sh
 uv sync
-uv run domeprint 120 100 100 --tab 5 -o piece.svg              # one piece, page sized to it
-uv run domeprint 120 100 100 --tab 5 --paper A4 -o piece.pdf   # one piece on A4
-uv run domeprint 61.8 54.7 54.7 --count 30 -o sheets.pdf        # 30 copies packed on A4 sheets
+uv run domeprint 61.8 54.7 54.7 -o sheet.pdf               # one A4 sheet, as many as fit (18)
+uv run domeprint 61.8 54.7 54.7 --count 30 -o sheets.pdf   # exactly 30 copies, as few sheets as needed
+uv run domeprint 120 100 100 --count 1 -o piece.pdf        # one piece, centred on A4
+uv run domeprint 120 100 100 --paper tight -o piece.svg    # one piece, page sized to it
 ```
 
 Print at **100% / "Actual size"** and check that the ruler on the sheet
@@ -27,9 +28,9 @@ measures exactly 100 mm. See [docs/printing.md](docs/printing.md).
 | `--tab` | 5 | glue tab width in mm, measured perpendicular to the edge; 0 = no tabs |
 | `--max-tab-angle` | 45 | steepest tab end, degrees from the fold line |
 | `--no-bisector` | off | don't limit tab ends to half the corner angle |
-| `--count` | 1 | number of copies; more than 1 packs them onto sheets |
+| `--count` | fill one sheet | number of copies, packed onto as few sheets as needed |
 | `--spacing` | 2 | minimum gap between packed pieces, mm |
-| `--paper` | tight | `tight` (page fits one piece), `A3`, `A4`, `A5`, `LETTER`, `LEGAL` (A4 when packing) |
+| `--paper` | A4 | `A3`, `A4`, `A5`, `LETTER`, `LEGAL`, or `tight` (one piece, page sized to it) |
 | `--margin` | 10 | page margin, mm |
 | `--no-labels` | off | no edge labels |
 | `--no-calibration` | off | no ruler |

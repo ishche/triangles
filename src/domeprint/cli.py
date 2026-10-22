@@ -8,14 +8,24 @@ import sys
 from pathlib import Path
 
 from .geometry import InvalidTriangleError, TabSpec, Triangle, build_piece
-from .layout import PAPER_SIZES_MM, Demand, DoesNotFitError, PackOptions, pack, single_on_paper, tight_sheet
+from .layout import (
+    PAPER_SIZES_MM,
+    Demand,
+    DoesNotFitError,
+    PackOptions,
+    fill_sheet,
+    pack,
+    single_on_paper,
+    tight_sheet,
+)
 from .render import RenderStyle, render_pdf, render_svg
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="domeprint",
-        description="Create a print-ready SVG or PDF template (cut + fold lines, glue tabs) for one triangle.",
+        description="Print-ready SVG or PDF templates (cut + fold lines, glue tabs) for a geodesic dome triangle. "
+        "By default, fills one A4 sheet with as many copies as fit.",
     )
     p.add_argument("ab", type=float, help="side AB in mm (base)")
     p.add_argument("bc", type=float, help="side BC in mm")
@@ -29,12 +39,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--paper",
-        default="tight",
-        help=f"'tight' (page fits the piece) or one of: {', '.join(PAPER_SIZES_MM)} (default tight)",
+        default="A4",
+        help=f"one of: {', '.join(PAPER_SIZES_MM)} (default A4), or 'tight' for one piece on a page sized to it",
     )
     p.add_argument("--margin", type=float, default=10.0, help="page margin in mm (default 10)")
     p.add_argument(
-        "--count", type=int, default=1, help="number of copies; >1 packs them onto as few sheets as possible"
+        "--count",
+        type=int,
+        help="number of copies, packed onto as few sheets as needed (default: as many as fit on one sheet)",
     )
     p.add_argument("--spacing", type=float, default=2.0, help="min distance between packed pieces, mm (default 2)")
     p.add_argument("--no-labels", action="store_true", help="omit edge labels")
@@ -53,17 +65,22 @@ def main(argv: list[str] | None = None) -> int:
         spec = TabSpec(args.tab, args.max_tab_angle, clamp_to_bisector=not args.no_bisector)
         piece = build_piece(triangle, spec)
         calibration = not args.no_calibration
-        if args.count < 1:
+        if args.count is not None and args.count < 1:
             raise ValueError("--count must be at least 1")
-        if args.count > 1:
-            paper = "A4" if args.paper.lower() == "tight" else args.paper
-            opts = PackOptions(paper=paper, margin=args.margin, spacing=args.spacing, calibration=calibration)
+        tight = args.paper.lower() == "tight"
+        if tight and args.count not in (None, 1):
+            raise ValueError("--paper tight holds a single piece; choose a paper size to print several")
+        opts = None if tight else PackOptions(args.paper, args.margin, args.spacing, calibration)
+        fill = None
+        if tight:
+            sheets = [tight_sheet(piece, args.margin, calibration=calibration)]
+        elif args.count is None:
+            sheets = [fill_sheet(piece, opts)]
+        elif args.count == 1:
+            sheets = [single_on_paper(piece, args.paper, args.margin, calibration=calibration)]
+        else:
             result = pack([Demand(piece, args.count)], opts)
             sheets, fill = list(result.sheets), result.fill_ratio
-        elif args.paper.lower() == "tight":
-            sheets, fill = [tight_sheet(piece, args.margin, calibration=calibration)], None
-        else:
-            sheets, fill = [single_on_paper(piece, args.paper, args.margin, calibration=calibration)], None
     except (InvalidTriangleError, DoesNotFitError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -102,7 +119,9 @@ def main(argv: list[str] | None = None) -> int:
         f"angles A={a:.4f} B={b:.4f} C={c:.4f} deg; inradius {triangle.inradius:.3f} mm",
         f"sheet {sheet.width:.2f} x {sheet.height:.2f} mm",
     ]
-    if args.count > 1:
+    if not tight and args.count is None:
+        info.append(f"{len(sheet.placements)} pieces on 1 sheet (as many as fit)")
+    elif fill is not None:
         info.append(f"{args.count} pieces on {len(sheets)} sheets, paper use {fill:.0%} of printable area")
     for tab, edge in zip(piece.tabs, triangle.edges):
         info.append(

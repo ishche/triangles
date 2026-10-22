@@ -12,7 +12,37 @@ def test_writes_svg(tmp_path, capsys):
 
 def test_stdout_and_paper(capsysbinary):
     assert main(["50", "50", "50", "--paper", "a4"]) == 0
-    assert b'width="210mm"' in capsysbinary.readouterr().out
+    out = capsysbinary.readouterr().out
+    assert b'width="210mm"' in out or b'width="297mm"' in out
+
+
+def test_default_fills_one_a4_sheet(tmp_path, capsys):
+    from pypdf import PdfReader
+
+    out = tmp_path / "sheet.pdf"
+    assert main(["61.8", "54.7", "54.7", "-o", str(out)]) == 0
+    reader = PdfReader(str(out))
+    assert len(reader.pages) == 1
+    box = reader.pages[0].mediabox
+    assert sorted((round(float(box.width)), round(float(box.height)))) == [595, 842]  # A4
+    assert "18 pieces on 1 sheet (as many as fit)" in capsys.readouterr().err
+
+
+def test_count_one_centres_a_single_piece(tmp_path, capsys):
+    out = tmp_path / "one.pdf"
+    assert main(["120", "100", "100", "--count", "1", "-o", str(out)]) == 0
+    assert "pieces on" not in capsys.readouterr().err
+
+
+def test_tight_paper_still_available(tmp_path):
+    out = tmp_path / "t.svg"
+    assert main(["120", "100", "100", "--paper", "tight", "-o", str(out)]) == 0
+    assert 'width="140mm"' in out.read_text()
+
+
+def test_tight_paper_rejects_count(capsys):
+    assert main(["50", "50", "50", "--paper", "tight", "--count", "3"]) == 2
+    assert "tight" in capsys.readouterr().err
 
 
 def test_writes_pdf_by_extension(tmp_path):
