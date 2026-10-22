@@ -56,14 +56,15 @@ def render_svg(sheet: Sheet, style: RenderStyle | None = None, title: str = "dom
             rot = f' transform="rotate({n(-math.degrees(item.angle))} {x} {y})"'
         anchor = ' text-anchor="middle"' if item.align == "middle" else ""
         return (
-            f'    <text class="{item.role}" x="{x}" y="{y}"{rot}{anchor} font-family="sans-serif" '
+            f'    <text class="{item.role}" x="{x}" y="{y}"{rot}{anchor} font-family="Helvetica, Arial, sans-serif" '
             f'font-size="{n(item.size)}" fill="{style.label_color}">{escape(item.text)}</text>'
         )
 
     wd, ht = n(sheet.width), n(sheet.height)
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="{wd}mm" height="{ht}mm" viewBox="0 0 {wd} {ht}">',
+        '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'width="{wd}mm" height="{ht}mm" viewBox="0 0 {wd} {ht}">',
         f"  <title>{escape(title)}</title>",
         f"  <desc>{escape(sheet_description(sheet))}</desc>",
     ]

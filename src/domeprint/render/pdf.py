@@ -21,31 +21,9 @@ from collections.abc import Sequence
 
 from ..geometry import Vec2
 from ..layout import Sheet
-from .display import PathItem, RenderStyle, TextItem, display_list, sheet_description, stroke_for
+from .display import PathItem, RenderStyle, TextItem, display_list, sheet_description, stroke_for, text_width
 
 MM_TO_PT = 72.0 / 25.4
-
-# Helvetica advance widths (1/1000 em) for printable ASCII, from the standard AFM.
-# Only used to centre labels; unknown characters fall back to 556.
-_HELVETICA_WIDTHS = dict(
-    zip(
-        " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
-        [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278]
-        + [556] * 10
-        + [278, 278, 584, 584, 584, 556, 1015]
-        + [667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833]
-        + [722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611]
-        + [278, 278, 278, 469, 556, 333]
-        + [556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833]
-        + [556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500]
-        + [334, 260, 334, 584],
-        strict=True,
-    )
-)
-
-
-def text_width(text: str, size: float) -> float:
-    return sum(_HELVETICA_WIDTHS.get(ch, 556) for ch in text) * size / 1000.0
 
 
 def _n(v: float, decimals: int = 6) -> str:
@@ -129,13 +107,13 @@ def render_pdf(
     page_ids = [5 + 2 * i for i in range(len(pages))]
     objects: dict[int, bytes] = {
         1: b"<< /Type /Catalog /Pages 2 0 R /ViewerPreferences << /PrintScaling /None >> >>",
-        2: (
-            f"<< /Type /Pages /Kids [{' '.join(f'{i} 0 R' for i in page_ids)}] /Count {len(pages)} >>"
-        ).encode(),
+        2: (f"<< /Type /Pages /Kids [{' '.join(f'{i} 0 R' for i in page_ids)}] /Count {len(pages)} >>").encode(),
         3: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
-        4: b"<< /Title " + _pdf_string(title) + b" /Subject " + _pdf_string(
-            " | ".join(sheet_description(s) for s in pages)
-        ) + b" /Producer (domeprint) >>",
+        4: b"<< /Title "
+        + _pdf_string(title)
+        + b" /Subject "
+        + _pdf_string(" | ".join(sheet_description(s) for s in pages))
+        + b" /Producer (domeprint) >>",
     }
     for page_id, sheet in zip(page_ids, pages):
         w, h = _n_floor(sheet.width * MM_TO_PT), _n_floor(sheet.height * MM_TO_PT)

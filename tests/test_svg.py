@@ -41,7 +41,7 @@ def sample():
 
 
 def test_physical_units(sample):
-    sheet, root = sample
+    _sheet, root = sample
     assert root.get("width") == "210mm"
     assert root.get("height") == "297mm"
     assert root.get("viewBox") == "0 0 210 297"
@@ -71,7 +71,7 @@ def test_cut_path_matches_geometry_exactly(sample):
 
 
 def test_fold_lines_have_exact_lengths(sample):
-    sheet, root = sample
+    _sheet, root = sample
     d = root.find(".//svg:path[@class='fold']", NS).get("d")
     segs = path_subpaths(d)
     assert len(segs) == 3
@@ -109,15 +109,34 @@ def test_labels_toggle():
     assert without.findall(".//svg:text[@class='label']", NS) == []
 
 
-def test_labels_lie_inside_triangle():
+def test_labels_lie_on_tabs_not_on_the_face():
+    from domeprint.geometry.polygon import point_in_convex_polygon
+
     piece = build_piece(Triangle(120, 100, 90), TabSpec(5))
     sheet = tight_sheet(piece)
     root = parse(render_svg(sheet))
-    a, b, c = sheet.placements[0].edges[0].start, sheet.placements[0].edges[1].start, sheet.placements[0].edges[2].start
-    for t in root.findall(".//svg:text[@class='label']", NS):
+    pl = sheet.placements[0]
+    a, b, c = (e.start for e in pl.edges)
+    texts = root.findall(".//svg:text[@class='label']", NS)
+    assert len(texts) == 3
+    for t in texts:
         p = Vec2(float(t.get("x")), sheet.height - float(t.get("y")))
-        for s, e in ((a, b), (b, c), (c, a)):
-            assert (e - s).cross(p - s) > 0
+        assert not point_in_convex_polygon(p, (a, b, c), eps=0)  # not on the visible face
+        assert any(
+            point_in_convex_polygon(p, tab.polygon, eps=1e-9)
+            for tab in (
+                type(tab)(
+                    pl.transform.apply(tab.start),
+                    pl.transform.apply(tab.end),
+                    tuple(pl.transform.apply(q) for q in tab.outer),
+                    tab.start_angle,
+                    tab.end_angle,
+                    tab.requested_width,
+                    tab.height,
+                )
+                for tab in pl.piece.tabs
+            )
+        )
 
 
 def test_calibration_bar_length():
